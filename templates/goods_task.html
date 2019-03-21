@@ -68,7 +68,7 @@
                                             <a onclick="getPreviewContent({{ task.id }})" class="btn btn-secondary btn-sm">Preview</a>
                                             <div class="dropdown">
                                                 <button class="btn btn-secondary btn-sm dropdown-toggle"
-                                                        data-toggle="dropdown" data-display="static">Actions
+                                                        data-toggle="dropdown">Actions
                                                 </button>
                                                 <div class="dropdown-menu" style="min-width: 6rem;">
                                                     <a class="dropdown-item" href="#" onclick="startSchedule({{ task.id }})">
@@ -240,14 +240,16 @@
             });
         });
 
-        // fix dropdown menu not visible
-        $('.table-responsive').on('show.bs.dropdown', function () {
-            $('.table-responsive').css("overflow", "inherit");
-        });
+        {% if goods_task_list|length == 1 %}
+            // fix dropdown menu not visible
+            $('.table-responsive').on('show.bs.dropdown', function () {
+                $('.table-responsive').css("overflow", "inherit");
+            });
 
-        $('.table-responsive').on('hide.bs.dropdown', function () {
-            $('.table-responsive').css("overflow", "auto");
-        });
+            $('.table-responsive').on('hide.bs.dropdown', function () {
+                $('.table-responsive').css("overflow", "auto");
+            });
+        {% endif %}
 
         // change notification status
         $('input[type=radio][name=enableNotification]').change(function () {
