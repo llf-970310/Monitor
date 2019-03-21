@@ -1,0 +1,382 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="my-3 my-md-5">
+        <div class="container">
+            <div class="row row-cards row-deck">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Price Trend</h3>
+                        </div>
+                        <div id="chart-development-activity" style="height: 15rem"></div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Goods Tasks</h3>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table card-table table-vcenter text-nowrap">
+                                <thead>
+                                <tr>
+                                    <th class="w-1">No.</th>
+                                    <th>Task Name</th>
+                                    <th>Goods Name</th>
+                                    <th>Type</th>
+                                    <th>Price</th>
+                                    <th>Frequency</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                    <th></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {% for task in goods_task_list %}
+                                    <tr>
+                                        <td><span class="text-muted">{{ task.id|stringformat:"04d" }}</span></td>
+                                        <td>{{ task.task_name }}</td>
+                                        <td>{{ task.goods_name }}</td>
+
+                                        {% if task.goods_type == 1 %}
+                                            <td>Kindle Ebook</td>
+                                        {% elif task.goods_type == 2 %}
+                                            <td>Taobao</td>
+                                        {% else %}
+                                            <td>Other</td>
+                                        {% endif %}
+
+                                        <td>￥{{ task.price }}</td>
+                                        <td>{{ task.frequency }}</td>
+
+                                        {% if task.status == -1 %}
+                                            <td>
+                                                <span class="status-icon bg-danger"></span> Error
+                                            </td>
+                                        {% elif task.status == 0 %}
+                                            <td>
+                                                <span class="status-icon bg-warning"></span> Stop
+                                            </td>
+                                        {% elif task.status == 1 %}
+                                            <td>
+                                                <span class="status-icon bg-success"></span> Monitoring
+                                            </td>
+                                        {% endif %}
+
+                                        <td class="text-right">
+                                            <a onclick="getPreviewContent({{ task.id }})" class="btn btn-secondary btn-sm">Preview</a>
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary btn-sm dropdown-toggle"
+                                                        data-toggle="dropdown" data-display="static">Actions
+                                                </button>
+                                                <div class="dropdown-menu" style="min-width: 6rem;">
+                                                    <a class="dropdown-item" href="#" onclick="startSchedule({{ task.id }})">
+                                                        <i class="dropdown-icon fe fe-play-circle"></i>Start
+                                                    </a>
+                                                    <a class="dropdown-item" href="#" onclick="stopSchedule({{ task.id }})">
+                                                        <i class="dropdown-icon fe fe-pause-circle"></i>End
+                                                    </a>
+                                                    <a class="dropdown-item" href="#"><i
+                                                            class="dropdown-icon fe fe-trash-2"></i>Delete</a>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <a class="icon" data-toggle="modal" data-target="#editTask">
+                                                <i class="fe fe-edit"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 分页 -->
+                    <ul class="pagination justify-content-end">
+                        {% if goods_task_list.has_previous %}
+                            <li class="page-item page-prev">
+                                <a class="page-link" href="?page={{ goods_task_list.previous_page_number }}" tabindex="-1">
+                                    <i class="fe fe-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item page-prev disabled">
+                                <a class="page-link" href="#" tabindex="-1">
+                                    <i class="fe fe-chevron-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in goods_task_list.paginator.page_range %}
+                            {% if num == goods_task_list.number %}
+                                <li class="page-item active"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% else %}
+                                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if goods_task_list.has_next %}
+                            <li class="page-item page-next">
+                                <a class="page-link" href="?page={{ goods_task_list.next_page_number }}">
+                                    <i class="fe fe-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item page-next disabled">
+                                <a class="page-link" href="#">
+                                    <i class="fe fe-chevron-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTask" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+         aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Edit Monitor Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="">
+                        <div class="form-group">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-control" name="example-text-input" placeholder="Text..">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Type</label>
+                            <select name="beast" id="select-beast" class="form-control custom-select">
+                                <option value="1">Kindle Ebook</option>
+                            </select>
+                        </div>
+                        <div class="row" id="kindle-input">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">Book Name</label>
+                                    <input type="text" class="form-control" name="example-text-input"
+                                           placeholder="Text..">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Frenquency</label>
+                            <div class="selectgroup w-100">
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="value" value="50" class="selectgroup-input" checked="">
+                                    <span class="selectgroup-button">1 Hour</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="value" value="100" class="selectgroup-input">
+                                    <span class="selectgroup-button">3 Hours</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="value" value="150" class="selectgroup-input">
+                                    <span class="selectgroup-button">12 Hours</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="value" value="200" class="selectgroup-input">
+                                    <span class="selectgroup-button">1 Day</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-label">Enable Notification</div>
+                            <div class="custom-controls-stacked">
+                                <label class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                           value="true" checked>
+                                    <span class="custom-control-label">Yes</span>
+                                </label>
+                                <label class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                           value="false">
+                                    <span class="custom-control-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="notificationSetting">
+                            <label class="form-label">When?</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button type="button" class="btn btn-secondary dropdown-toggle"
+                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        Action
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a class="dropdown-item" href="javascript:void(0)">Action</a>
+                                        <a class="dropdown-item" href="javascript:void(0)">Another action</a>
+                                        <a class="dropdown-item" href="javascript:void(0)">Something else here</a>
+                                        <div role="separator" class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="javascript:void(0)">Separated link</a>
+                                    </div>
+                                </div>
+                                <input type="text" class="form-control" aria-label="Text input with dropdown button">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary">Save changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js %}
+    <script>
+        require(['selectize'], function (selectize) {
+            $(document).ready(function () {
+                $('#select-beast').selectize({});
+            });
+        });
+
+        // fix dropdown menu not visible
+        $('.table-responsive').on('show.bs.dropdown', function () {
+            $('.table-responsive').css("overflow", "inherit");
+        });
+
+        $('.table-responsive').on('hide.bs.dropdown', function () {
+            $('.table-responsive').css("overflow", "auto");
+        });
+
+        // change notification status
+        $('input[type=radio][name=enableNotification]').change(function () {
+            if (this.value === "true")
+                $("#notificationSetting").show();
+            else
+                $("#notificationSetting").hide();
+        });
+
+        require(['c3'], function (c3) {
+            $(document).ready(function () {
+                 chart = c3.generate({
+                    bindto: '#chart-development-activity', // id of chart wrapper
+                    data: {
+                        columns: [
+                            // each columns data
+                            ['data1', 0, 5, 1, 2, 7, 5, 6, 8, 24, 7, 12, 5, 6, 3, 2, 2, 6, 30, 10, 10, 15, 14, 47, 65, 55]
+                        ],
+                        type: 'area', // default type of chart
+                        groups: [
+                            ['data1', 'data2', 'data3']
+                        ],
+                        colors: {
+                            'data1': tabler.colors["blue"]
+                        },
+                        names: {
+                            // name of each serie
+                            'data1': 'Price',
+                        }
+                    },
+                    axis: {
+                        y: {
+                            padding: {
+                                bottom: 0,
+                            },
+                            show: false,
+                            tick: {
+                                outer: false
+                            }
+                        },
+                        x: {
+                            padding: {
+                                left: 0,
+                                right: 0
+                            },
+                            show: false
+                        }
+                    },
+                    legend: {
+                        position: 'inset',
+                        padding: 0,
+                        inset: {
+                            anchor: 'top-left',
+                            x: 20,
+                            y: 8,
+                            step: 10
+                        }
+                    },
+                    tooltip: {
+                        format: {
+                            title: function (x) {
+                                return '';
+                            }
+                        }
+                    },
+                    padding: {
+                        bottom: 0,
+                        left: -1,
+                        right: -1
+                    },
+                    point: {
+                        show: false
+                    }
+                });
+            });
+        });
+
+        $.ajaxSetup({
+            data: {csrfmiddlewaretoken: '{{ csrf_token }}'},
+        });
+
+        function getPreviewContent(id) {
+
+        }
+
+        function startSchedule(id) {
+            $.ajax({
+                url: "{% url 'start_schedule' %}",
+                type: 'POST',
+                data: {
+                    'id': id,
+                    'task_type': 2
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+
+        function stopSchedule(id) {
+            $.ajax({
+                url: "{% url 'stop_schedule' %}",
+                type: 'POST',
+                data: {
+                    'id': id,
+                    'task_type': 2
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+    </script>
+{% endblock %}
