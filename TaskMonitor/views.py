@@ -14,7 +14,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from lxml import etree
 
 from TaskMonitor.forms import RegisterForm
@@ -79,7 +79,7 @@ def register(request):
             form.save()
 
             # 注册成功，跳转回首页
-            # return redirect('/clipping')
+            return redirect('/monitor')
     else:
         # 请求不是 POST，表明用户正在访问注册页面，展示一个空的注册表单给用户
         form = RegisterForm()
@@ -156,7 +156,7 @@ def start_schedule(request):
         elif task_type == "2":  # ebook
             goods_task = Goods_Task.objects.get(id=id)
             interval = goods_task.frequency.split(' ')
-            if interval[1] == "Hour":
+            if interval[1] == "Hour" or interval[1] == "Hours":
                 scheduler.add_job(get_kindle_ebook_price, 'interval', hours=int(interval[0]),
                                   args=[goods_task], id="ebook_" + id)
             elif interval[1] == "Day":
@@ -189,6 +189,43 @@ def stop_schedule(request):
     except Exception as e:
         traceback.print_exc()
         result = {'success': False, 'msg': 'Runtime Error'}
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@login_required
+def add_goods_task(request):
+    try:
+        task_name = request.POST.get("task_name")
+        type = request.POST.get("type")
+        book_name = request.POST.get("book_name")
+        interval = request.POST.get("interval")
+        enable_notif = request.POST.get("enable_notif")
+        notif_condition = request.POST.get("notif_condition")
+        price = request.POST.get("price")
+
+        if enable_notif == "false":
+            price = None
+            notification_type = None
+            flag = False
+        elif enable_notif == "true":
+            flag = True
+
+        if notif_condition == "Greater(>)":
+            notification_type = 1
+        elif notif_condition == "Less(<)":
+            notification_type = 2
+        elif notif_condition == "Number changed":
+            notification_type = 3
+            price = None
+
+        task_item = Goods_Task(task_name=task_name, goods_name=book_name, goods_type=type, frequency=interval,
+                               enable_notification=flag, notification_type=notification_type, price=price,
+                               user=request.user)
+        task_item.save()
+        result = {'success': True}
+    except:
+        result = {'success': False}
+        traceback.print_exc()
     return HttpResponse(json.dumps(result), content_type="application/json")
 # endregion
 

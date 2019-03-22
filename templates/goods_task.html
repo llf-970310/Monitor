@@ -16,6 +16,12 @@
                     <div class="card">
                         <div class="card-header">
                             <h3 class="card-title">Goods Tasks</h3>
+                            <div class="card-options">
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        data-toggle="modal" data-target="#newTask">
+                                    <i class="fe fe-plus mr-1"></i>Add
+                                </button>
+                            </div>
                         </div>
                         <div class="table-responsive">
                             <table class="table card-table table-vcenter text-nowrap">
@@ -47,7 +53,12 @@
                                             <td>Other</td>
                                         {% endif %}
 
-                                        <td>￥{{ task.price }}</td>
+                                        {% if task.price %}
+                                            <td>￥{{ task.price }}</td>
+                                        {% else %}
+                                            <td>￥------</td>
+                                        {% endif %}
+
                                         <td>{{ task.frequency }}</td>
 
                                         {% if task.status == -1 %}
@@ -137,8 +148,99 @@
         </div>
     </div>
 
-    <div class="modal fade" id="editTask" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="newTask" tabindex="-1" role="dialog" >
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">New Monitor Task</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="">
+                        <div class="form-group">
+                            <label class="form-label">Task Name</label>
+                            <input type="text" class="form-control" id="taskNameAdd" placeholder="Text..">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Type</label>
+                            <select id="selectTypeAdd" class="form-control custom-select">
+                                <option value="1">Kindle Ebook</option>
+                            </select>
+                        </div>
+                        <div class="row" id="kindle-input">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">Book Name</label>
+                                    <input type="text" class="form-control" id="bookNameAdd"
+                                           placeholder="Text..">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Interval</label>
+                            <div class="selectgroup w-100">
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="intervalAdd" value="1 Hour" class="selectgroup-input" checked="">
+                                    <span class="selectgroup-button">1 Hour</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="intervalAdd" value="3 Hours" class="selectgroup-input">
+                                    <span class="selectgroup-button">3 Hours</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="intervalAdd" value="12 Hours" class="selectgroup-input">
+                                    <span class="selectgroup-button">12 Hours</span>
+                                </label>
+                                <label class="selectgroup-item">
+                                    <input type="radio" name="intervalAdd" value="1 Day" class="selectgroup-input">
+                                    <span class="selectgroup-button">1 Day</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="form-label">Enable Notification</div>
+                            <div class="custom-controls-stacked">
+                                <label class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" class="custom-control-input" name="enableNotificationAdd"
+                                           value="true" checked>
+                                    <span class="custom-control-label">Yes</span>
+                                </label>
+                                <label class="custom-control custom-radio custom-control-inline">
+                                    <input type="radio" class="custom-control-input" name="enableNotificationAdd"
+                                           value="false">
+                                    <span class="custom-control-label">No</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="form-group" id="notificationSettingAdd">
+                            <label class="form-label">When?</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <button type="button" class="btn btn-secondary dropdown-toggle"
+                                            data-toggle="dropdown" id="notificationTypeBtnAdd">
+                                        Action
+                                    </button>
+                                    <div class="dropdown-menu" id="notificationTypeListAdd">
+                                        <a class="dropdown-item" href="javascript:void(0)">Greater(>)</a>
+                                        <a class="dropdown-item" href="javascript:void(0)">Less(<)</a>
+                                        <div role="separator" class="dropdown-divider"></div>
+                                        <a class="dropdown-item" href="javascript:void(0)" name="num_change">Number changed</a>
+                                    </div>
+                                </div>
+                                <input type="text" class="form-control" id="notificationTypeInputAdd">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="addTask()">Add task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTask" tabindex="-1" role="dialog" >
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
@@ -153,7 +255,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Type</label>
-                            <select name="beast" id="select-beast" class="form-control custom-select">
+                            <select id="selectTypeModify" class="form-control custom-select">
                                 <option value="1">Kindle Ebook</option>
                             </select>
                         </div>
@@ -191,18 +293,18 @@
                             <div class="form-label">Enable Notification</div>
                             <div class="custom-controls-stacked">
                                 <label class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                    <input type="radio" class="custom-control-input" name="enableNotificationModify"
                                            value="true" checked>
                                     <span class="custom-control-label">Yes</span>
                                 </label>
                                 <label class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                    <input type="radio" class="custom-control-input" name="enableNotificationModify"
                                            value="false">
                                     <span class="custom-control-label">No</span>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group" id="notificationSetting">
+                        <div class="form-group" id="notificationSettingModify">
                             <label class="form-label">When?</label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
@@ -236,7 +338,8 @@
     <script>
         require(['selectize'], function (selectize) {
             $(document).ready(function () {
-                $('#select-beast').selectize({});
+                $('#selectTypeAdd').selectize({});
+                $('#selectTypeModify').selectize({});
             });
         });
 
@@ -252,11 +355,19 @@
         {% endif %}
 
         // change notification status
-        $('input[type=radio][name=enableNotification]').change(function () {
+        $('input[type=radio][name=enableNotificationAdd]').change(function () {
             if (this.value === "true")
-                $("#notificationSetting").show();
+                $("#notificationSettingAdd").show();
             else
-                $("#notificationSetting").hide();
+                $("#notificationSettingAdd").hide();
+        });
+
+        // change notification status
+        $('input[type=radio][name=enableNotificationModify]').change(function () {
+            if (this.value === "true")
+                $("#notificationSettingModify").show();
+            else
+                $("#notificationSettingModify").hide();
         });
 
         require(['c3'], function (c3) {
@@ -327,6 +438,16 @@
             });
         });
 
+        // change notification-btn text when clicking dropdown list item
+        $('#notificationTypeListAdd').click(function (e) {
+            $('#notificationTypeBtnAdd').html(e.target.innerHTML);
+            if (e.target.name == "num_change") {
+                $('#notificationTypeInputAdd').attr('disabled', true);
+            } else {
+                $('#notificationTypeInputAdd').attr('disabled', false);
+            }
+        })
+
         $.ajaxSetup({
             data: {csrfmiddlewaretoken: '{{ csrf_token }}'},
         });
@@ -379,6 +500,38 @@
                     console.log("Ajax ERROR!")
                 }
             })
+        }
+
+        function addTask() {
+            $.ajax({
+                url: "{% url 'add_goods_task' %}",
+                type: 'POST',
+                data: {
+                    'task_name': $('#taskNameAdd').val(),
+                    'type': $('#selectTypeAdd').val(),
+                    'book_name': $('#bookNameAdd').val(),
+                    'interval': $('input[name="intervalAdd"]:checked').val(),
+                    'enable_notif': $('input[name="enableNotificationAdd"]:checked').val(),
+                    'notif_condition': $('#notificationTypeBtnAdd').text(),
+                    'price': $('#notificationTypeInputAdd').val(),
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert("添加失败");
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+
+        function delTask() {
+
         }
     </script>
 {% endblock %}
