@@ -25,13 +25,19 @@ class Goods_Task(models.Model):
     frequency = models.TextField("查询频率")
     enable_notification = models.BooleanField("是否提醒")
     notification_type = models.IntegerField("提醒类型")
-    price = models.IntegerField("价格")
+    price = models.FloatField("价格")
     status = models.IntegerField("状态")
 
 
 class Flight_Task_History(models.Model):
     task = models.ForeignKey('Flight_Task', on_delete=models.CASCADE)
-    query_date = models.DateField("查询时间")
+    query_date = models.DateTimeField("查询时间")
     economy_lowest_price = models.IntegerField("经济舱最低价格")
     business_lowest_price = models.IntegerField("商务舱最低价格")
     luxury_lowest_price = models.IntegerField("头等舱最低价格")
+
+
+class Goods_Task_History(models.Model):
+    task = models.ForeignKey('Goods_Task', on_delete=models.CASCADE)
+    query_date = models.DateTimeField("查询时间")
+    price = models.FloatField("价格")

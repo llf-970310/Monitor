@@ -3,9 +3,11 @@ import json
 import smtplib
 import sys
 import traceback
+from datetime import datetime
 from email.header import Header
 from email.mime.text import MIMEText
 
+import apscheduler
 import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 from django.contrib.auth.decorators import login_required
@@ -16,13 +18,14 @@ from django.shortcuts import render
 from lxml import etree
 
 from TaskMonitor.forms import RegisterForm
-from .models import Flight_Task, Goods_Task
+from .models import *
 
 # 切换输出流编码为utf-8
 if sys.stdout.encoding != 'UTF-8':
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
 if sys.stderr.encoding != 'UTF-8':
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
+
 
 # 开启定时器
 scheduler = BackgroundScheduler()
@@ -89,27 +92,27 @@ def register(request):
 
 @login_required
 def view_flight_task(request):
-    flight_task_list = Flight_Task.objects.all()
+    flight_task_list = Flight_Task.objects.filter(user_id=request.user.id)
 
     # 分页
     paginator = Paginator(flight_task_list, 5)
     page = request.GET.get('page')
     flight_tasks = paginator.get_page(page)
 
-    context = {'flight_task_list': flight_tasks, 'title': 'Monitor'}
+    context = {'flight_task_list': flight_tasks, 'title': 'Monitor - Flight Task'}
     return render(request, 'flight_task.html', context)
 
 
 @login_required
 def view_goods_task(request):
-    goods_task_list = Goods_Task.objects.all()
+    goods_task_list = Goods_Task.objects.filter(user_id=request.user.id)
 
     # 分页
     paginator = Paginator(goods_task_list, 5)
     page = request.GET.get('page')
     goods_tasks = paginator.get_page(page)
 
-    context = {'goods_task_list': goods_tasks, 'title': 'Goods Task'}
+    context = {'goods_task_list': goods_tasks, 'title': 'Monitor - Goods Task'}
     return render(request, 'goods_task.html', context)
 
 
@@ -152,8 +155,13 @@ def start_schedule(request):
             pass
         elif task_type == "2":  # ebook
             goods_task = Goods_Task.objects.get(id=id)
-            scheduler.add_job(get_kindle_ebook_price, 'interval', seconds=30,
-                              args=[goods_task.goods_name], id="ebook_" + id)
+            interval = goods_task.frequency.split(' ')
+            if interval[1] == "Hour":
+                scheduler.add_job(get_kindle_ebook_price, 'interval', hours=int(interval[0]),
+                                  args=[goods_task], id="ebook_" + id)
+            elif interval[1] == "Day":
+                scheduler.add_job(get_kindle_ebook_price, 'interval', days=int(interval[0]),
+                                  args=[goods_task], id="ebook_" + id)
             goods_task.status = 1
             goods_task.save()
 
@@ -185,25 +193,7 @@ def stop_schedule(request):
 # endregion
 
 
-# region Flight Func
-# 获取机场代码
-def get_airport_cd(text):
-    dict = {"上海": "PVG", "北京": "NAY"}
-    if text in dict:
-        return dict[text]
-    else:
-        return get_city_cd(text)
-
-
-# 获取城市代码
-def get_city_cd(text):
-    f = open('./static/cityJSONCN.js', encoding='utf-8')
-    tmp = json.load(f)
-    f.close()
-    city_code = {value: key for key, value in tmp.items()}
-    return city_code[text]
-
-
+# region Common Func
 def get_ua():
     with open("./static/UA_list.txt") as fileua:
         uas = fileua.readlines()
@@ -224,15 +214,15 @@ def get_header():
 
 
 # 发送邮件
-def send_email(flight, price):
+def send_email(subject, words):
     sender = 'lf97310@163.com'
     password = 'Lf4697323'
     receiver = ['543589863@qq.com', 'lf97310@163.com']
-    subject = '机票低价提醒'
-    words = '航班信息为：\n' \
-            + flight.flightNo + " " + flight.departAirport + "(" +flight.departDateTime + ")" + " -> " \
-            + flight.arrivalAirport + "(" + flight.arrivalDateTime + ")\n" \
-            + '最低价格为 ' + str(price)
+    # subject = '机票低价提醒'
+    # words = '航班信息为：\n' \
+    #         + flight.flightNo + " " + flight.departAirport + "(" +flight.departDateTime + ")" + " -> " \
+    #         + flight.arrivalAirport + "(" + flight.arrivalDateTime + ")\n" \
+    #         + '最低价格为 ' + str(price)
 
     msg = MIMEText(words, 'plain', 'utf-8')  # 中文需参数‘utf-8'，单字节字符不需要
     msg['Subject'] = Header(subject, 'utf-8')  # 邮件标题
@@ -247,6 +237,27 @@ def send_email(flight, price):
     smtp.sendmail(sender, receiver, msg.as_string())  # 这行代码解决的下方554的错误
     smtp.quit()
     print("==================邮件发送成功!==================")
+
+# endregion
+
+
+# region Flight Func
+# 获取机场代码
+def get_airport_cd(text):
+    dict = {"上海": "PVG", "北京": "NAY"}
+    if text in dict:
+        return dict[text]
+    else:
+        return get_city_cd(text)
+
+
+# 获取城市代码
+def get_city_cd(text):
+    f = open('./static/cityJSONCN.js', encoding='utf-8')
+    tmp = json.load(f)
+    f.close()
+    city_code = {value: key for key, value in tmp.items()}
+    return city_code[text]
 
 
 # 东航
@@ -347,21 +358,41 @@ def get_flight_ceair(dept_text, arr_text, date):
         print("==================获取机票数据失败！==================")
         traceback.print_exc()
     return result
+# endregion
 
 
+# region Goods Func
 # Kindle 电子书
-def get_kindle_ebook_price(book_name):
-    header = get_header()
-    with requests.session() as s:
-        req = s.get('https://www.amazon.cn/', headers=header)
-        cookie = requests.utils.dict_from_cookiejar(req.cookies)
-    url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + book_name
-    data = requests.get(url=url, cookies=cookie, headers=header)
-    data.encoding = 'utf-8'
-    s = etree.HTML(data.text)
-    price = s.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
-    if len(price) == 0:
-        return None
-    return price[0][1:]
+def get_kindle_ebook_price(task):
+    try:
+        # 查询电子书价格
+        header = get_header()
+        with requests.session() as s:
+            req = s.get('https://www.amazon.cn/', headers=header)
+            cookie = requests.utils.dict_from_cookiejar(req.cookies)
+        url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
+        data = requests.get(url=url, cookies=cookie, headers=header)
+        data.encoding = 'utf-8'
+        s = etree.HTML(data.text)
+        price = s.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
 
+        # 将历史价格插入数据库
+        if len(price) == 0:
+            result = -1
+            task.status = -1
+            task.save()
+            scheduler.remove_job("ebook_" + task.id)
+        else:
+            result = price[0][1:]
+            history_data = Goods_Task_History(task=task, query_date=datetime.now(), price=result)
+            history_data.save()
+
+        # 发送邮件提醒
+        if task.enable_notification == 1 and result != -1:
+            if task.notification_type == 1 and float(result) < task.price:
+                subject = "Kindle 电子书价格提醒"
+                content = "电子书《" + task.goods_name + "》的价格为 ￥" + result
+                send_email(subject, content)
+    except Exception:
+        traceback.print_exc()
 # endregion
