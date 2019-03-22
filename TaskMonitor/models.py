@@ -22,6 +22,7 @@ class Goods_Task(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     task_name = models.TextField("任务名称")
     goods_name = models.TextField("商品名称")
+    # 1 Kindle  2 Taobao
     goods_type = models.IntegerField("商品类型")
     frequency = models.TextField("查询频率")
     enable_notification = models.BooleanField("是否提醒")

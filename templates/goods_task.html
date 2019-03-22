@@ -94,7 +94,8 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <a class="icon" data-toggle="modal" data-target="#editTask">
+                                            <a class="icon" data-toggle="modal" data-target="#editTask"
+                                               onclick="setModifyModalInfo({{ task.id }})">
                                                 <i class="fe fe-edit"></i>
                                             </a>
                                         </td>
@@ -165,6 +166,7 @@
                             <label class="form-label">Type</label>
                             <select id="selectTypeAdd" class="form-control custom-select">
                                 <option value="1">Kindle Ebook</option>
+                                <option value="2">Taobao</option>
                             </select>
                         </div>
                         <div class="row" id="kindle-input">
@@ -249,21 +251,23 @@
                 </div>
                 <div class="modal-body">
                     <form action="">
+                        <input type="hidden" id="modifyTaskID">
                         <div class="form-group">
                             <label class="form-label">Task Name</label>
-                            <input type="text" class="form-control" name="example-text-input" placeholder="Text..">
+                            <input type="text" class="form-control" id="taskNameModify" placeholder="Text..">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Type</label>
                             <select id="selectTypeModify" class="form-control custom-select">
                                 <option value="1">Kindle Ebook</option>
+                                <option value="2">Taobao</option>
                             </select>
                         </div>
                         <div class="row" id="kindle-input">
                             <div class="col-md-12">
                                 <div class="form-group">
                                     <label class="form-label">Book Name</label>
-                                    <input type="text" class="form-control" name="example-text-input"
+                                    <input type="text" class="form-control" id="bookNameModify"
                                            placeholder="Text..">
                                 </div>
                             </div>
@@ -272,19 +276,19 @@
                             <label class="form-label">Interval</label>
                             <div class="selectgroup w-100">
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="50" class="selectgroup-input" checked="">
+                                    <input type="radio" name="intervalModify" value="1 Hour" class="selectgroup-input" checked="">
                                     <span class="selectgroup-button">1 Hour</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="100" class="selectgroup-input">
+                                    <input type="radio" name="intervalModify" value="3 Hours" class="selectgroup-input">
                                     <span class="selectgroup-button">3 Hours</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="150" class="selectgroup-input">
+                                    <input type="radio" name="intervalModify" value="12 Hours" class="selectgroup-input">
                                     <span class="selectgroup-button">12 Hours</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="200" class="selectgroup-input">
+                                    <input type="radio" name="intervalModify" value="1 Day" class="selectgroup-input">
                                     <span class="selectgroup-button">1 Day</span>
                                 </label>
                             </div>
@@ -309,25 +313,24 @@
                             <div class="input-group">
                                 <div class="input-group-prepend">
                                     <button type="button" class="btn btn-secondary dropdown-toggle"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            data-toggle="dropdown" id="notificationTypeBtnModify">
                                         Action
                                     </button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="javascript:void(0)">Action</a>
-                                        <a class="dropdown-item" href="javascript:void(0)">Another action</a>
-                                        <a class="dropdown-item" href="javascript:void(0)">Something else here</a>
+                                    <div class="dropdown-menu" id="notificationTypeListModify">
+                                        <a class="dropdown-item" href="javascript:void(0)">Greater(>)</a>
+                                        <a class="dropdown-item" href="javascript:void(0)">Less(<)</a>
                                         <div role="separator" class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="javascript:void(0)">Separated link</a>
+                                        <a class="dropdown-item" href="javascript:void(0)" name="num_change">Number changed</a>
                                     </div>
                                 </div>
-                                <input type="text" class="form-control" aria-label="Text input with dropdown button">
+                                <input type="text" class="form-control" id="notificationTypeInputModify">
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-primary" onclick="editTask()">Save changes</button>
                 </div>
             </div>
         </div>
@@ -341,33 +344,6 @@
                 $('#selectTypeAdd').selectize({});
                 $('#selectTypeModify').selectize({});
             });
-        });
-
-        {% if goods_task_list|length == 1 %}
-            // fix dropdown menu not visible
-            $('.table-responsive').on('show.bs.dropdown', function () {
-                $('.table-responsive').css("overflow", "inherit");
-            });
-
-            $('.table-responsive').on('hide.bs.dropdown', function () {
-                $('.table-responsive').css("overflow", "auto");
-            });
-        {% endif %}
-
-        // change notification status
-        $('input[type=radio][name=enableNotificationAdd]').change(function () {
-            if (this.value === "true")
-                $("#notificationSettingAdd").show();
-            else
-                $("#notificationSettingAdd").hide();
-        });
-
-        // change notification status
-        $('input[type=radio][name=enableNotificationModify]').change(function () {
-            if (this.value === "true")
-                $("#notificationSettingModify").show();
-            else
-                $("#notificationSettingModify").hide();
         });
 
         require(['c3'], function (c3) {
@@ -438,6 +414,33 @@
             });
         });
 
+        {% if goods_task_list|length == 1 %}
+            // fix dropdown menu not visible
+            $('.table-responsive').on('show.bs.dropdown', function () {
+                $('.table-responsive').css("overflow", "inherit");
+            });
+
+            $('.table-responsive').on('hide.bs.dropdown', function () {
+                $('.table-responsive').css("overflow", "auto");
+            });
+        {% endif %}
+
+        // change notification status
+        $('input[type=radio][name=enableNotificationAdd]').change(function () {
+            if (this.value === "true")
+                $("#notificationSettingAdd").show();
+            else
+                $("#notificationSettingAdd").hide();
+        });
+
+        // change notification status
+        $('input[type=radio][name=enableNotificationModify]').change(function () {
+            if (this.value === "true")
+                $("#notificationSettingModify").show();
+            else
+                $("#notificationSettingModify").hide();
+        });
+
         // change notification-btn text when clicking dropdown list item
         $('#notificationTypeListAdd').click(function (e) {
             $('#notificationTypeBtnAdd').html(e.target.innerHTML);
@@ -448,9 +451,53 @@
             }
         })
 
+        // change notification-btn text when clicking dropdown list item
+        $('#notificationTypeListModify').click(function (e) {
+            $('#notificationTypeBtnModify').html(e.target.innerHTML);
+            if (e.target.name == "num_change") {
+                $('#notificationTypeInputModify').attr('disabled', true);
+            } else {
+                $('#notificationTypeInputModify').attr('disabled', false);
+            }
+        })
+
         $.ajaxSetup({
             data: {csrfmiddlewaretoken: '{{ csrf_token }}'},
         });
+
+        function setModifyModalInfo(id) {
+            $('#modifyTaskID').val(id);
+            $.ajax({
+                url: "{% url 'get_goods_task_info' %}",
+                type: 'POST',
+                data: {
+                    'id': id
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    $('input[name="intervalModify"]:checked').removeAttr("checked");
+                    $('input[name="enableNotificationModify"]:checked').removeAttr("checked");
+
+                    $('#taskNameModify').val(data.task_name);
+                    $('#selectTypeModify').val(data.goods_type);
+                    $('#bookNameModify').val(data.goods_name);
+                    $('input[name="intervalModify"][value="' + data.frequency + '"]').attr("checked",true);
+
+                    if (data.enable_notification == 0) {
+                        $('input[name="enableNotificationModify"][value="false"]').attr("checked",true);
+                        $("#notificationSettingModify").hide();
+                    }
+                    else if (data.enable_notification == 1) {
+                        $('input[name="enableNotificationModify"][value="true"]').attr("checked",true);
+                        $("#notificationSettingModify").show();
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
 
         function getPreviewContent(id) {
 
@@ -519,9 +566,38 @@
                 async: false,
                 success: function (data) {
                     if (data.success) {
-                        location.reload();
+                        swal("Good Job!", "任务添加成功", "success").then((value) => location.reload());
                     } else {
-                        alert("添加失败");
+                        swal("Oops...", "出现一些问题，任务添加失败", "error");
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+
+        function editTask() {
+            $.ajax({
+                url: "{% url 'edit_goods_task' %}",
+                type: 'POST',
+                data: {
+                    'id': $('#modifyTaskID').val(),
+                    'task_name': $('#taskNameModify').val(),
+                    'type': $('#selectTypeModify').val(),
+                    'book_name': $('#bookNameModify').val(),
+                    'interval': $('input[name="intervalModify"]:checked').val(),
+                    'enable_notif': $('input[name="enableNotificationModify"]:checked').val(),
+                    'notif_condition': $('#notificationTypeBtnModify').text(),
+                    'price': $('#notificationTypeInputModify').val(),
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        swal("Good Job!", "任务编辑成功", "success").then((value) => location.reload());
+                    } else {
+                        swal("Oops...", "出现一些问题，任务编辑失败", "error");
                     }
                 },
                 error: function () {

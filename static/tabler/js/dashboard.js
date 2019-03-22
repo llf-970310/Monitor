@@ -19,6 +19,7 @@ paths: {
 'vector-map-de': '/static/tabler/js/vendors/jquery-jvectormap-de-merc',
 'vector-map-world': '/static/tabler/js/vendors/jquery-jvectormap-world-mill',
 'circle-progress': '/static/tabler/js/vendors/circle-progress.min',
+'sweetalert': 'https://cdn.jsdelivr.net/npm/sweetalert/dist/sweetalert.min',
 }
 });
 window.tabler = {

@@ -9,7 +9,10 @@ urlpatterns = [
     path('start_schedule', views.start_schedule, name='start_schedule'),
     path('stop_schedule', views.stop_schedule, name='stop_schedule'),
     path('add_goods_task', views.add_goods_task, name='add_goods_task'),
+    path('edit_goods_task', views.edit_goods_task, name='edit_goods_task'),
+    path('get_goods_task_info', views.get_goods_task_info, name='get_goods_task_info'),
 
     path('register/', views.register, name='register'),
+    path('setting/', views.setting, name='setting'),
     # path('export/<int:clipping_id>', views.export_clipping, name='export'),
 ]

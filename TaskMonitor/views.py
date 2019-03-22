@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
+from django.forms import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 from lxml import etree
@@ -88,6 +89,13 @@ def register(request):
     # 如果用户正在访问注册页面，则渲染的是一个空的注册表单
     # 如果用户通过表单提交注册信息，但是数据验证不合法，则渲染的是一个带有错误信息的表单
     return render(request, 'register.html', context={'form': form})
+
+
+@login_required
+def setting(request):
+    scheduler.print_jobs()
+    context = {'title': 'Setting'}
+    return render(request, 'setting.html', context)
 
 
 @login_required
@@ -227,6 +235,58 @@ def add_goods_task(request):
         result = {'success': False}
         traceback.print_exc()
     return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@login_required
+def edit_goods_task(request):
+    try:
+        id = request.POST.get("id")
+        task_name = request.POST.get("task_name")
+        type = request.POST.get("type")
+        book_name = request.POST.get("book_name")
+        interval = request.POST.get("interval")
+        enable_notif = request.POST.get("enable_notif")
+        notif_condition = request.POST.get("notif_condition")
+        price = request.POST.get("price")
+
+        if enable_notif == "false":
+            price = None
+            notification_type = None
+            flag = False
+        elif enable_notif == "true":
+            flag = True
+
+        if notif_condition == "Greater(>)":
+            notification_type = 1
+        elif notif_condition == "Less(<)":
+            notification_type = 2
+        elif notif_condition == "Number changed":
+            notification_type = 3
+            price = None
+
+        task = Goods_Task.objects.get(id=id)
+        task.task_name = task_name
+        task.goods_type = type
+        task.goods_name = book_name
+        task.frequency = interval
+        task.enable_notification = flag
+        task.notification_type = notification_type
+        task.price = price
+        task.save()
+
+        result = {'success': True}
+    except:
+        result = {'success': False}
+        traceback.print_exc()
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@login_required
+def get_goods_task_info(request):
+    task_id = request.POST.get("id")
+    task = Goods_Task.objects.get(id=task_id)
+    return HttpResponse(json.dumps(model_to_dict(task)), content_type="application/json")
+
 # endregion
 
 
@@ -418,7 +478,7 @@ def get_kindle_ebook_price(task):
             result = -1
             task.status = -1
             task.save()
-            scheduler.remove_job("ebook_" + task.id)
+            scheduler.remove_job("ebook_" + str(task.id))
         else:
             result = price[0][1:]
             history_data = Goods_Task_History(task=task, query_date=datetime.now(), price=result)
