@@ -106,7 +106,7 @@
                                     <a class="dropdown-item" href="#">
                                         <i class="dropdown-icon fe fe-settings"></i> Forgot Password
                                     </a>
-                                    <a class="dropdown-item" href="#">
+                                    <a class="dropdown-item" href="{% url 'logout' %}?next={{ request.path }}">
                                         <i class="dropdown-icon fe fe-log-out"></i> Sign out
                                     </a>
                                 </div>
@@ -168,19 +168,13 @@
                     <div class="col-auto ml-lg-auto">
                         <div class="row align-items-center">
                             <div class="col-auto">
-                                <ul class="list-inline list-inline-dots mb-0">
-                                    <li class="list-inline-item"><a href="./docs/index.html">Documentation</a></li>
-                                    <li class="list-inline-item"><a href="./faq.html">FAQ</a></li>
-                                </ul>
-                            </div>
-                            <div class="col-auto">
-                                <a href="https://github.com/tabler/tabler" class="btn btn-outline-primary btn-sm">Source
-                                    code</a>
+                                <a href="https://github.com/llf-970310/Monitor" class="btn btn-outline-primary btn-sm"
+                                   target="_blank">Source code</a>
                             </div>
                         </div>
                     </div>
                     <div class="col-12 col-lg-auto mt-3 mt-lg-0 text-center">
-                        Copyright © 2019
+                        Copyright © 2019 <a href=".">Monitor</a>. Theme by <a href="https://tabler.io/" target="_blank">Tabler</a>
                     </div>
                 </div>
             </div>

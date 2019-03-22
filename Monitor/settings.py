@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'TaskMonitor.apps.TaskmonitorConfig',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

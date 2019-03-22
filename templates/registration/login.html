@@ -1,4 +1,5 @@
 {% load staticfiles %}
+{% load widget_tweaks %}
 
 <!doctype html>
 <html lang="en" dir="ltr">
@@ -18,7 +19,7 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon"/>
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico"/>
     <!-- Generated: 2018-04-16 09:29:05 +0200 -->
-    <title>Login - tabler.github.io - a responsive, flat and full featured admin template</title>
+    <title>Login</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,500,500i,600,600i,700,700i&amp;subset=latin-ext">
@@ -39,23 +40,28 @@
             <div class="row">
                 <div class="col col-login mx-auto">
                     <div class="text-center mb-6">
-                        <img src="./demo/brand/tabler.svg" class="h-6" alt="">
+                        <img src="{% static 'img/logo.png' %}" class="h-6" alt="">
                     </div>
-                    <form class="card" action="" method="post">
+                    <form class="card" action="{% url 'login' %}" method="post">
+                        {% csrf_token %}
                         <div class="card-body p-6">
                             <div class="card-title">Login to your account</div>
+                            {% if form.errors %}
+                                <div class="alert alert-icon alert-danger" role="alert">
+                                    <i class="fe fe-alert-triangle mr-2" aria-hidden="true"></i>
+                                    Your username and password didn't match. Please try again.
+                                </div>
+                            {% endif %}
                             <div class="form-group">
-                                <label class="form-label">Email address</label>
-                                <input type="email" class="form-control" id="exampleInputEmail1"
-                                       aria-describedby="emailHelp" placeholder="Enter email">
+                                <label class="form-label">Username</label>
+                                {% render_field form.username type="text" class="form-control" placeholder="Enter username"%}
                             </div>
                             <div class="form-group">
                                 <label class="form-label">
                                     Password
-                                    <a href="./forgot-password.html" class="float-right small">I forgot password</a>
+                                    <a href="#" class="float-right small">I forgot password</a>
                                 </label>
-                                <input type="password" class="form-control" id="exampleInputPassword1"
-                                       placeholder="Password">
+                                {% render_field form.password type="password" class="form-control"  placeholder="Password"%}
                             </div>
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
@@ -69,7 +75,7 @@
                         </div>
                     </form>
                     <div class="text-center text-muted">
-                        Don't have account yet? <a href="./register.html">Sign up</a>
+                        Don't have account yet? <a href="{% url 'register' %}">Sign up</a>
                     </div>
                 </div>
             </div>

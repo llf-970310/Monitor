@@ -1,4 +1,5 @@
 {% load staticfiles %}
+{% load widget_tweaks %}
 
 <!doctype html>
 <html lang="en" dir="ltr">
@@ -18,7 +19,7 @@
     <link rel="icon" href="./favicon.ico" type="image/x-icon"/>
     <link rel="shortcut icon" type="image/x-icon" href="./favicon.ico"/>
     <!-- Generated: 2018-04-16 09:29:05 +0200 -->
-    <title>Register - tabler.github.io - a responsive, flat and full featured admin template</title>
+    <title>Register</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet"
           href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,300i,400,400i,500,500i,600,600i,700,700i&amp;subset=latin-ext">
@@ -39,28 +40,40 @@
             <div class="row">
                 <div class="col col-login mx-auto">
                     <div class="text-center mb-6">
-                        <img src="./demo/brand/tabler.svg" class="h-6" alt="">
+                        <img src="{% static 'img/logo.png' %}" class="h-6" alt="">
                     </div>
-                    <form class="card" action="" method="post">
+                    <form class="card" action="{% url 'register' %}" method="post">
+                        {% csrf_token %}
                         <div class="card-body p-6">
                             <div class="card-title">Create new account</div>
+                            {% if form.errors %}
+                                <div class="alert alert-icon alert-danger" role="alert">
+                                    <i class="fe fe-alert-triangle mr-2" aria-hidden="true"></i>
+                                    {% for key,value in form.errors.items %}
+                                        {{ value.as_text }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                             <div class="form-group">
-                                <label class="form-label">Name</label>
-                                <input type="text" class="form-control" placeholder="Enter name">
+                                <label class="form-label">Username</label>
+                                {% render_field form.username type="text" class="form-control" placeholder="Enter username"%}
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Email address</label>
-                                <input type="email" class="form-control" placeholder="Enter email">
+                                {% render_field form.email type="email" class="form-control" placeholder="Enter email"%}
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Password</label>
-                                <input type="password" class="form-control" placeholder="Password">
+                                {% render_field form.password1 type="password" class="form-control" placeholder="Password"%}
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Confirm Password</label>
+                                {% render_field form.password2 type="password" class="form-control" placeholder="Confirm Password"%}
                             </div>
                             <div class="form-group">
                                 <label class="custom-control custom-checkbox">
                                     <input type="checkbox" class="custom-control-input"/>
-                                    <span class="custom-control-label">Agree the <a
-                                            href="terms.html">terms and policy</a></span>
+                                    <span class="custom-control-label">Agree the <a href="#">terms and policy</a></span>
                                 </label>
                             </div>
                             <div class="form-footer">
@@ -69,7 +82,7 @@
                         </div>
                     </form>
                     <div class="text-center text-muted">
-                        Already have account? <a href="./login.html">Sign in</a>
+                        Already have account? <a href="{% url 'login' %}">Sign in</a>
                     </div>
                 </div>
             </div>
