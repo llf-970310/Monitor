@@ -4,6 +4,8 @@ from . import views
 urlpatterns = [
     path('', views.view_flight_task, name='index'),
     path('get_airline_preview', views.get_airline_preview, name='get_airline_preview'),
+    path('add_flight_task', views.add_flight_task, name='add_flight_task'),
+    path('del_flight_task', views.del_flight_task, name='del_flight_task'),
 
     path('goods_task', views.view_goods_task, name='goods_task'),
     path('get_ebook_preview', views.get_ebook_preview, name='get_ebook_preview'),

@@ -12,10 +12,10 @@ class Flight_Task(models.Model):
     frequency = models.TextField("查询频率")
     enable_notification = models.BooleanField("是否提醒")
     # 1 Greater(>)  2 Less(<)  3 Number changed
-    notification_type = models.IntegerField("提醒类型")
-    price = models.IntegerField("价格")
+    notification_type = models.IntegerField("提醒类型", null=True)
+    price = models.IntegerField("价格", null=True)
     # 0 停止  1 运行  -1 错误
-    status = models.IntegerField("状态")
+    status = models.IntegerField("状态", default=0)
 
 
 class Goods_Task(models.Model):

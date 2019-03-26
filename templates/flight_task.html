@@ -102,8 +102,9 @@
                                                             class="dropdown-icon fe fe-play-circle"></i>Start</a>
                                                     <a class="dropdown-item" href="#"><i
                                                             class="dropdown-icon fe fe-pause-circle"></i>End</a>
-                                                    <a class="dropdown-item" href="#"><i
-                                                            class="dropdown-icon fe fe-trash-2"></i>Delete</a>
+                                                    <a class="dropdown-item" href="#" onclick="delTask({{ task.id }})">
+                                                        <i class="dropdown-icon fe fe-trash-2"></i>Delete
+                                                    </a>
                                                 </div>
                                             </div>
                                         </td>
@@ -162,68 +163,68 @@
         </div>
     </div>
 
-    <div class="modal fade" id="editTask" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="newTask" tabindex="-1" role="dialog" >
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Edit Monitor Task</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">New Monitor Task</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <form action="">
                         <div class="form-group">
                             <label class="form-label">Task Name</label>
-                            <input type="text" class="form-control" name="example-text-input" placeholder="Text..">
+                            <input type="text" class="form-control" id="taskNameAdd" placeholder="Text..">
                         </div>
                         <div class="form-group">
                             <label class="form-label">Type</label>
-                            <select name="beast" id="select-beast" class="form-control custom-select">
-                                <option value="1">Flight - 中国东方航空</option>
-                                <option value="2">Flight - 中国南方航空</option>
-                                <option value="3">Flight - Ctrip</option>
+                            <select id="selectTypeAdd" class="form-control custom-select">
+                                <option value="中国东方航空">中国东方航空</option>
+                                <option value="中国南方航空">中国南方航空</option>
+                                <option value="携程">携程</option>
                             </select>
                         </div>
                         <div class="row" id="flight-input">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">From</label>
-                                    <input type="text" class="form-control" name="example-text-input"
-                                           placeholder="Text..">
+                                    <input type="text" class="form-control" id="fromAdd"
+                                           placeholder="e.g. 北京" >
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">To</label>
-                                    <input type="text" class="form-control" name="example-text-input"
-                                           placeholder="Text..">
+                                    <input type="text" class="form-control" id="toAdd"
+                                           placeholder="e.g. 上海">
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">Date</label>
-                                    <input type="text" class="form-control" name="example-text-input"
-                                           placeholder="Text..">
+                                    <input type="text" class="form-control" id="dateAdd"
+                                           data-mask="9999-99-99" data-mask-clearifnotmatch="true" placeholder="0000-00-00">
                                 </div>
                             </div>
                         </div>
+
                         <div class="form-group">
                             <label class="form-label">Interval</label>
                             <div class="selectgroup w-100">
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="50" class="selectgroup-input" checked="">
+                                    <input type="radio" name="intervalAdd" value="1 Hour" class="selectgroup-input" checked="">
                                     <span class="selectgroup-button">1 Hour</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="100" class="selectgroup-input">
+                                    <input type="radio" name="intervalAdd" value="3 Hours" class="selectgroup-input">
                                     <span class="selectgroup-button">3 Hours</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="150" class="selectgroup-input">
+                                    <input type="radio" name="intervalAdd" value="12 Hours" class="selectgroup-input">
                                     <span class="selectgroup-button">12 Hours</span>
                                 </label>
                                 <label class="selectgroup-item">
-                                    <input type="radio" name="value" value="200" class="selectgroup-input">
+                                    <input type="radio" name="intervalAdd" value="1 Day" class="selectgroup-input">
                                     <span class="selectgroup-button">1 Day</span>
                                 </label>
                             </div>
@@ -232,41 +233,40 @@
                             <div class="form-label">Enable Notification</div>
                             <div class="custom-controls-stacked">
                                 <label class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                    <input type="radio" class="custom-control-input" name="enableNotificationAdd"
                                            value="true" checked>
                                     <span class="custom-control-label">Yes</span>
                                 </label>
                                 <label class="custom-control custom-radio custom-control-inline">
-                                    <input type="radio" class="custom-control-input" name="enableNotification"
+                                    <input type="radio" class="custom-control-input" name="enableNotificationAdd"
                                            value="false">
                                     <span class="custom-control-label">No</span>
                                 </label>
                             </div>
                         </div>
-                        <div class="form-group" id="notificationSetting">
+                        <div class="form-group" id="notificationSettingAdd">
                             <label class="form-label">When?</label>
                             <div class="input-group">
                                 <div class="input-group-prepend">
                                     <button type="button" class="btn btn-secondary dropdown-toggle"
-                                            data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                            data-toggle="dropdown" id="notificationTypeBtnAdd">
                                         Action
                                     </button>
-                                    <div class="dropdown-menu">
-                                        <a class="dropdown-item" href="javascript:void(0)">Action</a>
-                                        <a class="dropdown-item" href="javascript:void(0)">Another action</a>
-                                        <a class="dropdown-item" href="javascript:void(0)">Something else here</a>
+                                    <div class="dropdown-menu" id="notificationTypeListAdd">
+                                        <a class="dropdown-item" href="javascript:void(0)">Greater(>)</a>
+                                        <a class="dropdown-item" href="javascript:void(0)">Less(<)</a>
                                         <div role="separator" class="dropdown-divider"></div>
-                                        <a class="dropdown-item" href="javascript:void(0)">Separated link</a>
+                                        <a class="dropdown-item" href="javascript:void(0)" name="num_change">Number changed</a>
                                     </div>
                                 </div>
-                                <input type="text" class="form-control" aria-label="Text input with dropdown button">
+                                <input type="text" class="form-control" id="notificationTypeInputAdd">
                             </div>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-primary">Save changes</button>
+                    <button type="button" class="btn btn-primary" onclick="addTask()">Add task</button>
                 </div>
             </div>
         </div>
@@ -279,7 +279,8 @@
 
         require(['selectize'], function (selectize) {
             $(document).ready(function () {
-                $('#select-beast').selectize({});
+                $('#selectTypeAdd').selectize({});
+                $('#selectTypeModify').selectize({});
             });
         });
 
@@ -350,18 +351,19 @@
                     },
                     point: {
                         show: false
+                    },
+                    color: {
+                        pattern: [
+                            '#fca328',
+                            '#7bd235',
+                            '#76befe',
+                        ]
                     }
                 });
             });
         });
 
-        // change notification status
-        $('input[type=radio][name=enableNotification]').change(function () {
-            if (this.value === "true")
-                $("#notificationSetting").show();
-            else
-                $("#notificationSetting").hide();
-        });
+        require(['input-mask']);
 
         {% if flight_task_list|length == 1 %}
             // fix dropdown menu not visible
@@ -373,6 +375,42 @@
                 $('.table-responsive').css("overflow", "auto");
             });
         {% endif %}
+
+        // change notification status
+        $('input[type=radio][name=enableNotificationAdd]').change(function () {
+            if (this.value === "true")
+                $("#notificationSettingAdd").show();
+            else
+                $("#notificationSettingAdd").hide();
+        });
+
+        // change notification status
+        $('input[type=radio][name=enableNotificationModify]').change(function () {
+            if (this.value === "true")
+                $("#notificationSettingModify").show();
+            else
+                $("#notificationSettingModify").hide();
+        });
+
+        // change notification-btn text when clicking dropdown list item
+        $('#notificationTypeListAdd').click(function (e) {
+            $('#notificationTypeBtnAdd').html(e.target.innerHTML);
+            if (e.target.name == "num_change") {
+                $('#notificationTypeInputAdd').attr('disabled', true);
+            } else {
+                $('#notificationTypeInputAdd').attr('disabled', false);
+            }
+        })
+
+        // change notification-btn text when clicking dropdown list item
+        $('#notificationTypeListModify').click(function (e) {
+            $('#notificationTypeBtnModify').html(e.target.innerHTML);
+            if (e.target.name == "num_change") {
+                $('#notificationTypeInputModify').attr('disabled', true);
+            } else {
+                $('#notificationTypeInputModify').attr('disabled', false);
+            }
+        })
 
         $.ajaxSetup({
             data: {csrfmiddlewaretoken: '{{ csrf_token }}'},
@@ -412,33 +450,102 @@
 
         function getFlightTbody(data) {
             let html = "";
-            html += "<tr>";
-            html += "<td>" + data.lowest_flight_economy.flightNo + "</td>";
-            html += "<td>" + data.lowest_flight_economy.departAirport + " " + data.lowest_flight_economy.departDateTime + "</td>";
-            html += "<td>" + data.lowest_flight_economy.arrivalAirport + " " + data.lowest_flight_economy.arrivalDateTime + "</td>";
-            html += "<td>" + "￥" + data.lowest_price_economy + "</td>";
-            html += "<td>- -</td>";
-            html += "<td>- -</td>";
-            html += "</tr>";
 
-            html += "<tr>";
-            html += "<td>" + data.lowest_flight_business.flightNo + "</td>";
-            html += "<td>" + data.lowest_flight_business.departAirport + " " + data.lowest_flight_business.departDateTime + "</td>";
-            html += "<td>" + data.lowest_flight_business.arrivalAirport + " " + data.lowest_flight_business.arrivalDateTime + "</td>";
-            html += "<td>- -</td>";
-            html += "<td>" + "￥" + data.lowest_price_business + "</td>";
-            html += "<td>- -</td>";
-            html += "</tr>";
+            if (data.lowest_flight_economy != null) {
+                html += "<tr>";
+                html += "<td>" + data.lowest_flight_economy.flightNo + "</td>";
+                html += "<td>" + data.lowest_flight_economy.departAirport + " " + data.lowest_flight_economy.departDateTime + "</td>";
+                html += "<td>" + data.lowest_flight_economy.arrivalAirport + " " + data.lowest_flight_economy.arrivalDateTime + "</td>";
+                html += "<td>" + "￥" + data.lowest_price_economy + "</td>";
+                html += "<td>- -</td>";
+                html += "<td>- -</td>";
+                html += "</tr>";
+            }
 
-            html += "<tr>";
-            html += "<td>" + data.lowest_flight_luxury.flightNo + "</td>";
-            html += "<td>" + data.lowest_flight_luxury.departAirport + " " + data.lowest_flight_luxury.departDateTime + "</td>";
-            html += "<td>" + data.lowest_flight_luxury.arrivalAirport + " " + data.lowest_flight_luxury.arrivalDateTime + "</td>";
-            html += "<td>- -</td>";
-            html += "<td>- -</td>";
-            html += "<td>" + "￥" + data.lowest_price_luxury + "</td>";
-            html += "</tr>";
+            if (data.lowest_flight_business != null) {
+                html += "<tr>";
+                html += "<td>" + data.lowest_flight_business.flightNo + "</td>";
+                html += "<td>" + data.lowest_flight_business.departAirport + " " + data.lowest_flight_business.departDateTime + "</td>";
+                html += "<td>" + data.lowest_flight_business.arrivalAirport + " " + data.lowest_flight_business.arrivalDateTime + "</td>";
+                html += "<td>- -</td>";
+                html += "<td>" + "￥" + data.lowest_price_business + "</td>";
+                html += "<td>- -</td>";
+                html += "</tr>";
+            }
+
+            if (data.lowest_flight_luxury != null) {
+                html += "<tr>";
+                html += "<td>" + data.lowest_flight_luxury.flightNo + "</td>";
+                html += "<td>" + data.lowest_flight_luxury.departAirport + " " + data.lowest_flight_luxury.departDateTime + "</td>";
+                html += "<td>" + data.lowest_flight_luxury.arrivalAirport + " " + data.lowest_flight_luxury.arrivalDateTime + "</td>";
+                html += "<td>- -</td>";
+                html += "<td>- -</td>";
+                html += "<td>" + "￥" + data.lowest_price_luxury + "</td>";
+                html += "</tr>";
+            }
             return html;
+        }
+
+        function addTask() {
+            $.ajax({
+                url: "{% url 'add_flight_task' %}",
+                type: 'POST',
+                data: {
+                    'task_name': $('#taskNameAdd').val(),
+                    'airline_company': $('#selectTypeAdd').val(),
+                    'from': $('#fromAdd').val(),
+                    'to': $('#toAdd').val(),
+                    'date': $('#dateAdd').val(),
+                    'interval': $('input[name="intervalAdd"]:checked').val(),
+                    'enable_notif': $('input[name="enableNotificationAdd"]:checked').val(),
+                    'notif_condition': $('#notificationTypeBtnAdd').text(),
+                    'price': $('#notificationTypeInputAdd').val(),
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        swal("Good Job!", "任务添加成功", "success").then((value) => location.reload());
+                    } else {
+                        swal("Oops...", "出现一些问题，任务添加失败", "error");
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+
+        function delTask(id) {
+            swal({
+                title: "Are you sure?",
+                text: "确定要删除该任务吗？一旦删除，不可恢复。",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $.ajax({
+                        url: "{% url 'del_flight_task' %}",
+                        type: 'POST',
+                        data: {
+                            'id': id
+                        },
+                        dataType: "json",
+                        async: false,
+                        success: function (data) {
+                            if (data.success) {
+                                swal("Good Job!", "已成功删除该任务", "success").then((value) => location.reload());
+                            } else {
+                                swal("Oops...", "出现一些问题，任务删除失败", "error");
+                            }
+                        },
+                        error: function () {
+                            console.log("Ajax ERROR!")
+                        }
+                    })
+                }
+            });
         }
     </script>
 {% endblock %}

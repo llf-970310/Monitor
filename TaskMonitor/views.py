@@ -238,6 +238,52 @@ def add_goods_task(request):
 
 
 @login_required
+def add_flight_task(request):
+    try:
+        task_name = request.POST.get("task_name")
+        airline_company = request.POST.get("airline_company")
+        dept = request.POST.get("from")
+        arr = request.POST.get("to")
+        flight_date = request.POST.get("date")
+        interval = request.POST.get("interval")
+        enable_notif = request.POST.get("enable_notif")
+        notif_condition = request.POST.get("notif_condition")
+        price = request.POST.get("price")
+
+        if enable_notif == "false":
+            price = None
+            notification_type = None
+            flag = False
+        elif enable_notif == "true":
+            flag = True
+
+        if notif_condition == "Greater(>)":
+            notification_type = 1
+        elif notif_condition == "Less(<)":
+            notification_type = 2
+        elif notif_condition == "Number changed":
+            notification_type = 3
+            price = None
+
+        task_item = Flight_Task(task_name=task_name, dept_city=dept, arr_city=arr, flight_date=flight_date,
+                                airline_company=airline_company,frequency=interval, enable_notification=flag,
+                                notification_type=notification_type, price=price, user=request.user)
+        task_item.save()
+        result = {'success': True}
+    except:
+        result = {'success': False}
+        traceback.print_exc()
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@login_required
+def get_goods_task_info(request):
+    task_id = request.POST.get("id")
+    task = Goods_Task.objects.get(id=task_id)
+    return HttpResponse(json.dumps(model_to_dict(task)), content_type="application/json")
+
+
+@login_required
 def edit_goods_task(request):
     try:
         id = request.POST.get("id")
@@ -294,10 +340,15 @@ def del_goods_task(request):
 
 
 @login_required
-def get_goods_task_info(request):
-    task_id = request.POST.get("id")
-    task = Goods_Task.objects.get(id=task_id)
-    return HttpResponse(json.dumps(model_to_dict(task)), content_type="application/json")
+def del_flight_task(request):
+    try:
+        task_id = request.POST.get("id")
+        Flight_Task.objects.get(id=task_id).delete()
+        result = {'success': True}
+    except:
+        result = {'success': False}
+        traceback.print_exc()
+    return HttpResponse(json.dumps(result), content_type="application/json")
 
 # endregion
 
@@ -429,12 +480,8 @@ def get_flight_ceair(dept_text, arr_text, date):
             #     flight.display()
 
             # 获取最低价
-            lowest_price_economy = 1234567
-            lowest_price_business = 1234567
-            lowest_price_luxury = 1234567
-            lowest_flight_economy = None
-            lowest_flight_business = None
-            lowest_flight_luxury = None
+            lowest_price_economy, lowest_price_business, lowest_price_luxury = 1234567, 1234567, 1234567
+            lowest_flight_economy, lowest_flight_business, lowest_flight_luxury = None, None, None
 
             for flight in flight_list:
                 for product in flight.product:
@@ -448,12 +495,16 @@ def get_flight_ceair(dept_text, arr_text, date):
                         lowest_price_economy = product.salePrice
                         lowest_flight_economy = flight
 
-            lowest_flight_economy_dict = lowest_flight_economy.__dict__
-            lowest_flight_economy_dict.pop("product")
-            lowest_flight_business_dict = lowest_flight_business.__dict__
-            lowest_flight_business_dict.pop("product")
-            lowest_flight_luxury_dict = lowest_flight_luxury.__dict__
-            lowest_flight_luxury_dict.pop("product")
+            lowest_flight_economy_dict, lowest_flight_business_dict, lowest_flight_luxury_dict = None, None, None
+            if lowest_flight_economy is not None:
+                lowest_flight_economy_dict = lowest_flight_economy.__dict__
+                lowest_flight_economy_dict.pop("product", "404")
+            if lowest_flight_business is not None:
+                lowest_flight_business_dict = lowest_flight_business.__dict__
+                lowest_flight_business_dict.pop("product", "404")
+            if lowest_flight_luxury is not None:
+                lowest_flight_luxury_dict = lowest_flight_luxury.__dict__
+                lowest_flight_luxury_dict.pop("product", "404")
 
             result['success'] = True
             result['lowest_price_economy'] = lowest_price_economy
