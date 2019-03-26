@@ -282,6 +282,18 @@ def edit_goods_task(request):
 
 
 @login_required
+def del_goods_task(request):
+    try:
+        task_id = request.POST.get("id")
+        Goods_Task.objects.get(id=task_id).delete()
+        result = {'success': True}
+    except:
+        result = {'success': False}
+        traceback.print_exc()
+    return HttpResponse(json.dumps(result), content_type="application/json")
+
+
+@login_required
 def get_goods_task_info(request):
     task_id = request.POST.get("id")
     task = Goods_Task.objects.get(id=task_id)
@@ -467,11 +479,22 @@ def get_kindle_ebook_price(task):
         with requests.session() as s:
             req = s.get('https://www.amazon.cn/', headers=header)
             cookie = requests.utils.dict_from_cookiejar(req.cookies)
-        url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
+
+        # 旧版数据获取，因为网站数据是JS动态加载，所以有时会获取不到数据
+        # url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
+        # data = requests.get(url=url, cookies=cookie, headers=header)
+        # data.encoding = 'utf-8'
+        # s = etree.HTML(data.text)
+        # price = s.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
+
+        url = "https://www.amazon.cn/mn/search/ajax/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&" \
+              "url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
         data = requests.get(url=url, cookies=cookie, headers=header)
         data.encoding = 'utf-8'
-        s = etree.HTML(data.text)
-        price = s.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
+        data_arr = data.text.split('&&&')
+        result_html = json.loads(data_arr[7])['centerMinus']['data']['value']
+        result_tree = etree.HTML(result_html)
+        price = result_tree.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
 
         # 将历史价格插入数据库
         if len(price) == 0:
