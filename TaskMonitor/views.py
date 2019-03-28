@@ -1,5 +1,6 @@
 import codecs
 import json
+import math
 import smtplib
 import sys
 import traceback
@@ -27,7 +28,6 @@ if sys.stdout.encoding != 'UTF-8':
 if sys.stderr.encoding != 'UTF-8':
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
-
 # 开启定时器
 scheduler = BackgroundScheduler()
 scheduler.start()
@@ -47,11 +47,11 @@ class Flight:
         self.product.append(product)
 
     def display(self):
-        print(self.flightNo + " " + self.departAirport + "(" +self.departDateTime + ")" + " -> " +
+        print(self.flightNo + " " + self.departAirport + "(" + self.departDateTime + ")" + " -> " +
               self.arrivalAirport + "(" + self.arrivalDateTime + ")")
         self.product.sort(key=lambda item: item.salePrice)
         for i in range(len(self.product)):
-            print(str(i+1) + " " + self.product[i].display())
+            print(str(i + 1) + " " + self.product[i].display())
 
 
 class Product:
@@ -62,6 +62,8 @@ class Product:
 
     def display(self):
         return self.productName + " " + str(self.salePrice) + " " + str(self.discount)
+
+
 # endregion
 
 
@@ -130,7 +132,7 @@ def get_airline_preview(request):
         try:
             id = request.POST.get("id")
             flight_task = Flight_Task.objects.get(id=id)
-            result = get_flight_ceair(flight_task.dept_city, flight_task.arr_city, str(flight_task.flight_date))
+            result = get_flight_ceair(flight_task, 0)
         except Exception as e:
             result = {'success': False}
             traceback.print_exc()
@@ -160,7 +162,16 @@ def start_schedule(request):
         id = request.POST.get("id")
         task_type = request.POST.get("task_type")
         if task_type == "1":  # flight
-            pass
+            flight_task = Flight_Task.objects.get(id=id)
+            interval = flight_task.frequency.split(' ')
+            if interval[1] == "Hour" or interval[1] == "Hours":
+                scheduler.add_job(get_flight_ceair, 'interval', hours=int(interval[0]),
+                                  args=[flight_task, 1], id="flight_" + id)
+            elif interval[1] == "Day":
+                scheduler.add_job(get_flight_ceair, 'interval', days=int(interval[0]),
+                                  args=[flight_task, 1], id="flight_" + id)
+            flight_task.status = 1
+            flight_task.save()
         elif task_type == "2":  # ebook
             goods_task = Goods_Task.objects.get(id=id)
             interval = goods_task.frequency.split(' ')
@@ -186,7 +197,10 @@ def stop_schedule(request):
         id = request.POST.get("id")
         task_type = request.POST.get("task_type")
         if task_type == "1":  # flight
-            pass
+            scheduler.remove_job("flight_" + id)
+            flight_task = Flight_Task.objects.get(id=id)
+            flight_task.status = 0
+            flight_task.save()
         elif task_type == "2":  # ebook
             scheduler.remove_job("ebook_" + id)
             goods_task = Goods_Task.objects.get(id=id)
@@ -266,7 +280,7 @@ def add_flight_task(request):
             price = None
 
         task_item = Flight_Task(task_name=task_name, dept_city=dept, arr_city=arr, flight_date=flight_date,
-                                airline_company=airline_company,frequency=interval, enable_notification=flag,
+                                airline_company=airline_company, frequency=interval, enable_notification=flag,
                                 notification_type=notification_type, price=price, user=request.user)
         task_item.save()
         result = {'success': True}
@@ -350,6 +364,7 @@ def del_flight_task(request):
         traceback.print_exc()
     return HttpResponse(json.dumps(result), content_type="application/json")
 
+
 # endregion
 
 
@@ -358,8 +373,8 @@ def get_ua():
     with open("./static/UA_list.txt") as fileua:
         uas = fileua.readlines()
         import random
-        cnt = random.randint(0,len(uas)-1)
-        return uas[cnt].replace("\n","")
+        cnt = random.randint(0, len(uas) - 1)
+        return uas[cnt].replace("\n", "")
 
 
 def get_header():
@@ -378,11 +393,6 @@ def send_email(subject, words):
     sender = 'lf97310@163.com'
     password = 'Lf4697323'
     receiver = ['543589863@qq.com', 'lf97310@163.com']
-    # subject = '机票低价提醒'
-    # words = '航班信息为：\n' \
-    #         + flight.flightNo + " " + flight.departAirport + "(" +flight.departDateTime + ")" + " -> " \
-    #         + flight.arrivalAirport + "(" + flight.arrivalDateTime + ")\n" \
-    #         + '最低价格为 ' + str(price)
 
     msg = MIMEText(words, 'plain', 'utf-8')  # 中文需参数‘utf-8'，单字节字符不需要
     msg['Subject'] = Header(subject, 'utf-8')  # 邮件标题
@@ -397,7 +407,6 @@ def send_email(subject, words):
     smtp.sendmail(sender, receiver, msg.as_string())  # 这行代码解决的下方554的错误
     smtp.quit()
     print("==================邮件发送成功!==================")
-
 # endregion
 
 
@@ -421,16 +430,16 @@ def get_city_cd(text):
 
 
 # 东航
-def get_flight_ceair(dept_text, arr_text, date):
+def get_flight_ceair(task, is_auto_generate):
     result = {}
 
     # 获取城市代码
-    dept_cd = get_city_cd(dept_text)
-    arr_cd = get_city_cd(arr_text)
+    dept_cd = get_city_cd(task.dept_city)
+    arr_cd = get_city_cd(task.arr_city)
 
     # 获取机场代码
-    dept = get_airport_cd(dept_text)
-    arr = get_airport_cd(arr_text)
+    dept = get_airport_cd(task.dept_city)
+    arr = get_airport_cd(task.arr_city)
 
     # 设置爬虫参数
     url = "http://www.ceair.com/otabooking/flight-search!doFlightSearch.shtml"
@@ -439,13 +448,13 @@ def get_flight_ceair(dept_text, arr_text, date):
                             '"arrNation":"CN","arrRegion":"CN","arrCityCode":"ARR-CITYCODE","deptDt":"DATE"}],'
                             '"tripType":"OW","adtCount":"1","chdCount":"0","infCount":"0","currency":"CNY",'
                             '"sortType":"a","sortExec":"a"}'}
-    values['searchCond'] = values['searchCond'].replace('DEPT-TXT', dept_text)
-    values['searchCond'] = values['searchCond'].replace('ARR-TXT', arr_text)
+    values['searchCond'] = values['searchCond'].replace('DEPT-TXT', task.dept_city)
+    values['searchCond'] = values['searchCond'].replace('ARR-TXT', task.arr_city)
     values['searchCond'] = values['searchCond'].replace('DEPT-CITYCODE', dept_cd)
     values['searchCond'] = values['searchCond'].replace('ARR-CITYCODE', arr_cd)
     values['searchCond'] = values['searchCond'].replace('DEPT', dept)
     values['searchCond'] = values['searchCond'].replace('ARR', arr)
-    values['searchCond'] = values['searchCond'].replace('DATE', date)
+    values['searchCond'] = values['searchCond'].replace('DATE', str(task.flight_date))
 
     try:
         # 爬虫获取数据
@@ -455,18 +464,19 @@ def get_flight_ceair(dept_text, arr_text, date):
         text = json.loads(temp)
 
         # 解析数据
-        if 'flightInfo' not in text.keys():
-            print("==================无法获取%s从%s到%s的机票信息==================" % (date, dept_text, arr_text))
+        if 'flightInfo' not in text.keys():  # 获取失败（可能原因：日期错误，网页抓取错误）
+            task.status = -1
+            task.save()
+            scheduler.remove_job("flight_" + str(task.id))
             result['success'] = False
+            result['msg'] = "无法获取%s从%s到%s的机票信息" % (str(task.flight_date), task.dept_city, task.arr_city)
         else:
-            print('==================获取机票数据成功==================')
-
             # 添加所有航班信息
             flight_list = []
             for flight_info in text['flightInfo']:
                 flight = Flight(flight_info['flightNo'], flight_info['departDateTime'], flight_info['arrivalDateTime'],
-                                dept_text + flight_info['departAirport']['codeContext'],
-                                arr_text + flight_info['arrivalAirport']['codeContext'])
+                                task.dept_city + flight_info['departAirport']['codeContext'],
+                                task.arr_city + flight_info['arrivalAirport']['codeContext'])
                 flight_list.append(flight)
 
             # 添加所有产品信息
@@ -480,7 +490,7 @@ def get_flight_ceair(dept_text, arr_text, date):
             #     flight.display()
 
             # 获取最低价
-            lowest_price_economy, lowest_price_business, lowest_price_luxury = 1234567, 1234567, 1234567
+            lowest_price_economy, lowest_price_business, lowest_price_luxury = float('inf'), float('inf'), float('inf')
             lowest_flight_economy, lowest_flight_business, lowest_flight_luxury = None, None, None
 
             for flight in flight_list:
@@ -506,6 +516,10 @@ def get_flight_ceair(dept_text, arr_text, date):
                 lowest_flight_luxury_dict = lowest_flight_luxury.__dict__
                 lowest_flight_luxury_dict.pop("product", "404")
 
+            lowest_price_economy = lowest_price_economy if not math.isinf(lowest_price_economy) else None
+            lowest_price_business = lowest_price_business if not math.isinf(lowest_price_business) else None
+            lowest_price_luxury = lowest_price_luxury if not math.isinf(lowest_price_luxury) else None
+
             result['success'] = True
             result['lowest_price_economy'] = lowest_price_economy
             result['lowest_price_business'] = lowest_price_business
@@ -513,9 +527,33 @@ def get_flight_ceair(dept_text, arr_text, date):
             result['lowest_flight_economy'] = lowest_flight_economy_dict
             result['lowest_flight_business'] = lowest_flight_business_dict
             result['lowest_flight_luxury'] = lowest_flight_luxury_dict
+
+            # 发送邮件提醒
+            if is_auto_generate == 1 and task.enable_notification == 1 and lowest_flight_economy is not None:
+                if task.notification_type == 2 and float(lowest_price_economy) < task.price:
+                    subject = "机票监控价格提醒"
+                    content = '航班信息为：\n' \
+                              + lowest_flight_economy.flightNo + " " \
+                              + lowest_flight_economy.departAirport \
+                              + "(" + lowest_flight_economy.departDateTime + ")" + " -> " \
+                              + lowest_flight_economy.arrivalAirport \
+                              + "(" + lowest_flight_economy.arrivalDateTime + ")\n" \
+                              + '最低价格为 ' + str(lowest_price_economy)
+                    send_email(subject, content)
+
+            # 历史价格插入数据库
+            if is_auto_generate == 1:
+                history_data = Flight_Task_History(task=task, query_date=datetime.now(),
+                                                   economy_lowest_price=lowest_price_economy,
+                                                   business_lowest_price=lowest_price_business,
+                                                   luxury_lowest_price=lowest_price_luxury)
+                history_data.save()
     except Exception as e:
+        task.status = -1
+        task.save()
+        scheduler.remove_job("flight_" + str(task.id))
         result['success'] = False
-        print("==================获取机票数据失败！==================")
+        result['msg'] = "运行过程中发生错误，机票数据获取失败"
         traceback.print_exc()
     return result
 # endregion
@@ -560,10 +598,13 @@ def get_kindle_ebook_price(task):
 
         # 发送邮件提醒
         if task.enable_notification == 1 and result != -1:
-            if task.notification_type == 1 and float(result) < task.price:
+            if task.notification_type == 2 and float(result) < task.price:
                 subject = "Kindle 电子书价格提醒"
                 content = "电子书《" + task.goods_name + "》的价格为 ￥" + result
                 send_email(subject, content)
     except Exception:
+        task.status = -1
+        task.save()
+        scheduler.remove_job("ebook_" + str(task.id))
         traceback.print_exc()
 # endregion

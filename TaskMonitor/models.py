@@ -34,9 +34,9 @@ class Goods_Task(models.Model):
 class Flight_Task_History(models.Model):
     task = models.ForeignKey('Flight_Task', on_delete=models.CASCADE)
     query_date = models.DateTimeField("查询时间")
-    economy_lowest_price = models.IntegerField("经济舱最低价格")
-    business_lowest_price = models.IntegerField("商务舱最低价格")
-    luxury_lowest_price = models.IntegerField("头等舱最低价格")
+    economy_lowest_price = models.IntegerField("经济舱最低价格", null=True)
+    business_lowest_price = models.IntegerField("商务舱最低价格", null=True)
+    luxury_lowest_price = models.IntegerField("头等舱最低价格", null=True)
 
 
 class Goods_Task_History(models.Model):

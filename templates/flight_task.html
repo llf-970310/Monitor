@@ -98,10 +98,12 @@
                                                         data-toggle="dropdown" >Actions
                                                 </button>
                                                 <div class="dropdown-menu" style="min-width: 6rem;">
-                                                    <a class="dropdown-item" href="#"><i
-                                                            class="dropdown-icon fe fe-play-circle"></i>Start</a>
-                                                    <a class="dropdown-item" href="#"><i
-                                                            class="dropdown-icon fe fe-pause-circle"></i>End</a>
+                                                    <a class="dropdown-item" href="#" onclick="startSchedule({{ task.id }})">
+                                                        <i class="dropdown-icon fe fe-play-circle"></i>Start
+                                                    </a>
+                                                    <a class="dropdown-item" href="#" onclick="stopSchedule({{ task.id }})">
+                                                        <i class="dropdown-icon fe fe-pause-circle"></i>End
+                                                    </a>
                                                     <a class="dropdown-item" href="#" onclick="delTask({{ task.id }})">
                                                         <i class="dropdown-icon fe fe-trash-2"></i>Delete
                                                     </a>
@@ -484,6 +486,52 @@
                 html += "</tr>";
             }
             return html;
+        }
+
+        function startSchedule(id) {
+            $.ajax({
+                url: "{% url 'start_schedule' %}",
+                type: 'POST',
+                data: {
+                    'id': id,
+                    'task_type': 1
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
+        }
+
+        function stopSchedule(id) {
+            $.ajax({
+                url: "{% url 'stop_schedule' %}",
+                type: 'POST',
+                data: {
+                    'id': id,
+                    'task_type': 1
+                },
+                dataType: "json",
+                async: false,
+                success: function (data) {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+
+                    }
+                },
+                error: function () {
+                    console.log("Ajax ERROR!")
+                }
+            })
         }
 
         function addTask() {

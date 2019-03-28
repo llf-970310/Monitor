@@ -1,1 +1,58 @@
 {% extends 'base.html' %}
+
+{% block content%}
+    <div class="my-3 my-md-9">
+        <div class="container">
+            <div class="row row row-cards row-deck">
+                <div class="col-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">My Profile</h3>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="row">
+                                    <div class="col-auto">
+                                    <span class="avatar avatar-xl" style="background-image: url(demo/faces/female/9.jpg)"></span>
+                                    </div>
+                                    <div class="col">
+                                        <div class="form-group">
+                                            <label class="form-label">Username</label>
+                                            <div class="input-icon">
+                                                <span class="input-icon-addon">
+                                                    <i class="fe fe-user"></i>
+                                                </span>
+                                                <input type="text" class="form-control" disabled />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email Address</label>
+                                    <div class="row gutters-sm">
+                                        <div class="col">
+                                            <div class="input-icon">
+                                                <span class="input-icon-addon">
+                                                    <i class="fe fe-mail"></i>
+                                                </span>
+                                                <input type="text" class="form-control" placeholder="your-email@domain.com"/>
+                                            </div>
+                                        </div>
+                                        <span class="col-auto align-self-center">
+                                            <span class="form-help" data-toggle="popover" data-placement="top"
+                                                data-content="The notification messages will be sent to this email address.">?
+                                            </span>
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="form-footer text-right">
+                                    <button class="btn btn-primary btn-block">Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
