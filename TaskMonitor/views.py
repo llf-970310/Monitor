@@ -14,6 +14,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.core.paginator import Paginator
+from django.db import close_old_connections
 from django.forms import model_to_dict
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
@@ -543,6 +544,7 @@ def get_flight_ceair(task, is_auto_generate):
 
             # 历史价格插入数据库
             if is_auto_generate == 1:
+                close_old_connections()
                 history_data = Flight_Task_History(task=task, query_date=datetime.now(),
                                                    economy_lowest_price=lowest_price_economy,
                                                    business_lowest_price=lowest_price_business,
@@ -566,24 +568,26 @@ def get_kindle_ebook_price(task):
         # 查询电子书价格
         header = get_header()
         with requests.session() as s:
-            req = s.get('https://www.amazon.cn/', headers=header)
+            req = s.get('https://www.amazon.cn/', headers=header, verify=False)
             cookie = requests.utils.dict_from_cookiejar(req.cookies)
 
         # 旧版数据获取，因为网站数据是JS动态加载，所以有时会获取不到数据
-        # url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
+        url = "https://www.amazon.cn/s/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
+        data = requests.get(url=url, cookies=cookie, headers=header, verify=False)
+        data.encoding = 'utf-8'
+        s = etree.HTML(data.text)
+        price = s.xpath('//*[@id="search"]/div[1]/div[2]/div/span[3]/div[1]/div[1]/div/div/div/div[2]/div[2]/div/'
+                        'div[2]/div[1]/div/div[1]/div[2]/div/a/span/span[1]/text()')
+
+        # url = "https://www.amazon.cn/mn/search/ajax/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&" \
+        #       "url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
         # data = requests.get(url=url, cookies=cookie, headers=header)
         # data.encoding = 'utf-8'
-        # s = etree.HTML(data.text)
-        # price = s.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
-
-        url = "https://www.amazon.cn/mn/search/ajax/ref=nb_sb_noss?__mk_zh_CN=亚马逊网站&" \
-              "url=search-alias%3Ddigital-text&field-keywords=" + task.goods_name
-        data = requests.get(url=url, cookies=cookie, headers=header)
-        data.encoding = 'utf-8'
-        data_arr = data.text.split('&&&')
-        result_html = json.loads(data_arr[7])['centerMinus']['data']['value']
-        result_tree = etree.HTML(result_html)
-        price = result_tree.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
+        # data_arr = data.text.split('&&&')
+        # print(data_arr)
+        # result_html = json.loads(data_arr[7])['centerMinus']['data']['value']
+        # result_tree = etree.HTML(result_html)
+        # price = result_tree.xpath('//*[@id="result_0"]/div/div/div/div[2]/div[2]/div[1]/div[2]/a/span[2]/text()')
 
         # 将历史价格插入数据库
         if len(price) == 0:
@@ -593,6 +597,7 @@ def get_kindle_ebook_price(task):
             scheduler.remove_job("ebook_" + str(task.id))
         else:
             result = price[0][1:]
+            close_old_connections()
             history_data = Goods_Task_History(task=task, query_date=datetime.now(), price=result)
             history_data.save()
 
